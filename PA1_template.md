@@ -12,7 +12,7 @@ install.packages("dplyr", repos="http://cran.rstudio.com/")
 ```
 ## 
 ## The downloaded binary packages are in
-## 	/var/folders/52/smbfmffj3tj4h4ddy_9g7d000000gn/T//RtmpIX6h6f/downloaded_packages
+## 	/var/folders/52/smbfmffj3tj4h4ddy_9g7d000000gn/T//RtmpZCY4Yh/downloaded_packages
 ```
 
 ```r
@@ -40,11 +40,12 @@ install.packages("ggplot2", repos="http://cran.rstudio.com/")
 ```
 ## 
 ## The downloaded binary packages are in
-## 	/var/folders/52/smbfmffj3tj4h4ddy_9g7d000000gn/T//RtmpIX6h6f/downloaded_packages
+## 	/var/folders/52/smbfmffj3tj4h4ddy_9g7d000000gn/T//RtmpZCY4Yh/downloaded_packages
 ```
 
 ```r
 library(ggplot2)
+library(lattice)
 ```
 
 ## Loading and preprocessing the data
@@ -96,7 +97,7 @@ Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and 
 
 ```r
 res<-summarize(group_by(df1,interval), count=n(), tot=sum(steps))
-plot(x=as.factor(res$interval),y=res$tot,type="l")
+plot(x=(res$interval),y=res$tot,type="l")
 ```
 
 ![plot of chunk unnamed-chunk-6](PA1_template_files/figure-html/unnamed-chunk-6.png) 
@@ -197,23 +198,11 @@ median_stps_imputed_NAs-median_stps_without_NAs
 ##Create a new column to determine if the date is a weekend (1) or weekday (0)
 
 ```r
-df2$weekend<-ifelse((as.POSIXlt(df2$date)$wday==0 | as.POSIXlt(df2$date)$wday==6), 1,0)
-res<-summarize(group_by(df2,weekend), count=n(), stp_total=sum(steps), avg_stps=sum(steps)/n())
-res
-```
-
-```
-## Source: local data frame [2 x 4]
-## 
-##   weekend count stp_total avg_stps
-## 1       0 12960    461513    35.61
-## 2       1  4608    195224    42.37
-```
-
-```r
-res2<-summarize(group_by(df2,date),weekend=max(weekend), stp_total=(sum(steps)))
-#graph the sum of steps per day and highly the weekends (1) versus weekdays (0)
-qplot(date,stp_total, data=res2, col=as.factor(weekend))
+#Using the weekday number function to create a new field with weekend identification
+df2$weekend<-ifelse((as.POSIXlt(df2$date)$wday==0 | as.POSIXlt(df2$date)$wday==6), "weekend","weekday")
+#Building a summary table by interval and weekend calculating average number of steps
+res<-summarize(group_by(df2,interval,weekend), avg_stps=sum(steps)/n())
+xyplot(avg_stps ~ interval | weekend, res, type='l', layout=c(1,2), ylab="Average number of steps per day")
 ```
 
 ![plot of chunk unnamed-chunk-12](PA1_template_files/figure-html/unnamed-chunk-12.png) 
