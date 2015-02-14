@@ -12,7 +12,7 @@ install.packages("dplyr", repos="http://cran.rstudio.com/")
 ```
 ## 
 ## The downloaded binary packages are in
-## 	/var/folders/52/smbfmffj3tj4h4ddy_9g7d000000gn/T//RtmpZCY4Yh/downloaded_packages
+## 	/var/folders/52/smbfmffj3tj4h4ddy_9g7d000000gn/T//RtmppTk1A5/downloaded_packages
 ```
 
 ```r
@@ -40,7 +40,7 @@ install.packages("ggplot2", repos="http://cran.rstudio.com/")
 ```
 ## 
 ## The downloaded binary packages are in
-## 	/var/folders/52/smbfmffj3tj4h4ddy_9g7d000000gn/T//RtmpZCY4Yh/downloaded_packages
+## 	/var/folders/52/smbfmffj3tj4h4ddy_9g7d000000gn/T//RtmppTk1A5/downloaded_packages
 ```
 
 ```r
