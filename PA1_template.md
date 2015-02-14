@@ -1,0 +1,219 @@
+# Reproducible Research: Peer Assessment 1
+Paul Nagy  
+February 14th, 2015  
+
+## Packages Used
+
+```r
+#dply package for data manipulation
+install.packages("dplyr", repos="http://cran.rstudio.com/")
+```
+
+```
+## 
+## The downloaded binary packages are in
+## 	/var/folders/52/smbfmffj3tj4h4ddy_9g7d000000gn/T//RtmpIX6h6f/downloaded_packages
+```
+
+```r
+library(dplyr)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following object is masked from 'package:stats':
+## 
+##     filter
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
+#ggplot2 for advanced plotting capabilities
+install.packages("ggplot2", repos="http://cran.rstudio.com/")
+```
+
+```
+## 
+## The downloaded binary packages are in
+## 	/var/folders/52/smbfmffj3tj4h4ddy_9g7d000000gn/T//RtmpIX6h6f/downloaded_packages
+```
+
+```r
+library(ggplot2)
+```
+
+## Loading and preprocessing the data
+
+```r
+df <- read.table("./activity.csv", header=TRUE, sep=",")
+#df1 uses complete.cases to remove all the NA's for question 1
+df1<-df[complete.cases(df),]
+```
+
+# What is mean total number of steps taken per day?
+For this part of the assignment, you can ignore the missing values in the dataset.  
+1. Make a histogram of the total number of steps taken each day
+
+```r
+##summarize is a  dplyr tool for grouping (by date) and aggregating steps
+res<-summarize(group_by(df1,date), count=n(), tot=sum(steps))
+hist(res$tot, main="Distribution of total steps per day", xlab="Number of steps per day")
+```
+
+![plot of chunk unnamed-chunk-3](PA1_template_files/figure-html/unnamed-chunk-3.png) 
+  
+2. Calculate and report the mean and median total number of steps taken per day
+
+The mean number of steps taken per day is 
+
+```r
+mean_stps_without_NAs=mean(res$tot)
+mean_stps_without_NAs
+```
+
+```
+## [1] 10766
+```
+
+The median number of steps taken per day is 
+
+```r
+median_stps_without_NAs=median(res$tot)
+median_stps_without_NAs
+```
+
+```
+## [1] 10765
+```
+
+## What is the average daily activity pattern?  
+Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+
+```r
+res<-summarize(group_by(df1,interval), count=n(), tot=sum(steps))
+plot(x=as.factor(res$interval),y=res$tot,type="l")
+```
+
+![plot of chunk unnamed-chunk-6](PA1_template_files/figure-html/unnamed-chunk-6.png) 
+
+```r
+##note the change in data format for interval from integer to factor.  This prevents plotting scale up to 100 instead of 60.
+```
+
+
+Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```r
+filter (df1, steps==max(steps)) 
+```
+
+```
+##   steps       date interval
+## 1   806 2012-11-27      615
+```
+
+## Imputing missing values
+
+Note that there are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.  
+1. Calculate and report the total number of missing values in the dataset
+(i.e. the total number of rows with NAs)
+
+```r
+#Number of rows with NAs
+Num_NA=nrow(df)-nrow(df1)
+```
+
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+#Take mean for that interval.
+
+```r
+res<-summarize(group_by(df1,interval),  stp_mean=sum(steps)/n())
+##This builds the lookup table called res that has mean steps per interval
+```
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+```r
+df2<-df
+df2$steps=ifelse(is.na(df2$steps),res[res$interval==df2$interval]$stp_mean,df2$steps)
+```
+##Runs through the new data frame and tests each step count for NA, if yes then it inserts the mean from res for that interval.  If no, it leaves it alone.
+
+4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+
+```r
+res<-summarize(group_by(df2,date),  stp_total=sum(steps))
+hist(res$stp_total, main="Distribution of total steps per day", xlab="Number of steps per day")
+```
+
+![plot of chunk unnamed-chunk-11](PA1_template_files/figure-html/unnamed-chunk-11.png) 
+
+```r
+mean_stps_imputed_NAs=mean(res$stp_total)
+##Mean value of total number of steps taken per day with imputed NA values.
+mean_stps_imputed_NAs
+```
+
+```
+## [1] 10766
+```
+
+```r
+#Imputed mean compared to mean without imputed values.
+mean_stps_imputed_NAs-mean_stps_without_NAs
+```
+
+```
+## [1] 0
+```
+
+```r
+#Median value of total number of steps taken per day with imputed NA values
+median_stps_imputed_NAs=median(res$stp_total)
+median_stps_imputed_NAs
+```
+
+```
+## [1] 10766
+```
+
+```r
+#Imputed median compared to median without imputed values.
+median_stps_imputed_NAs-median_stps_without_NAs
+```
+
+```
+## [1] 1.189
+```
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+##Create a new column to determine if the date is a weekend (1) or weekday (0)
+
+```r
+df2$weekend<-ifelse((as.POSIXlt(df2$date)$wday==0 | as.POSIXlt(df2$date)$wday==6), 1,0)
+res<-summarize(group_by(df2,weekend), count=n(), stp_total=sum(steps), avg_stps=sum(steps)/n())
+res
+```
+
+```
+## Source: local data frame [2 x 4]
+## 
+##   weekend count stp_total avg_stps
+## 1       0 12960    461513    35.61
+## 2       1  4608    195224    42.37
+```
+
+```r
+res2<-summarize(group_by(df2,date),weekend=max(weekend), stp_total=(sum(steps)))
+#graph the sum of steps per day and highly the weekends (1) versus weekdays (0)
+qplot(date,stp_total, data=res2, col=as.factor(weekend))
+```
+
+![plot of chunk unnamed-chunk-12](PA1_template_files/figure-html/unnamed-chunk-12.png) 
